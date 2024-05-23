@@ -181,15 +181,15 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 			// Обработка случая, когда введенных дней нет в месяце (Например m 31 6,8)
 			ok := false
-			loof:
-				for _, d := range months {
-					for _, m := range daysMonth {
-						if m < dayM[d] {
-							ok = true
-							break loof
-						}
+		loof:
+			for _, d := range months {
+				for _, m := range daysMonth {
+					if m < dayM[d] {
+						ok = true
+						break loof
 					}
 				}
+			}
 
 			if !ok {
 				return "", fmt.Errorf("некорректный формат правила повторения: %s, не существует такого дня в введенных месяцах", repeat)
@@ -203,6 +203,8 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 			// Проверяем год на високосность
 			if !((t.Year()%4 == 0 && t.Year()%100 != 0) || t.Year()%400 == 0) {
 				dayM[2] = 28
+			} else {
+				dayM[2] = 29
 			}
 
 			// Проверяем, день месяца входит ли в правило
