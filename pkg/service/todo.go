@@ -12,21 +12,38 @@ import (
 )
 
 type TodoService struct{
-	repository.RepositoryInterface
+	rps repository.RepositoryInterface
 }
 
 // Конструктор связки сервиса и репозитория
 func NewTodoService(repos repository.RepositoryInterface) *TodoService {
-	return &TodoService{RepositoryInterface: repos}
+	return &TodoService{rps: repos}
 }
 
 // Методы сервиса
-func (s *TodoService) GetTasks() (task []structures.Task,  err error) {
+func (s *TodoService) GetTasks(search string) (task []structures.Task,  err error) {
 	var tasks []structures.Task 
-	tasks, err = s.RepositoryInterface.GetTasks()
-	if err != nil {
-		return nil, err
+
+	if search == "" {
+		tasks, err = s.rps.GetTasks()
+		if err != nil {
+			return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
+		}
+	}else {
+		date, err := time.Parse("02.01.2006", search)
+		if err == nil {
+			tasks, err = s.rps.GetTasksWithDate(date.Format("20060102"))
+			if err != nil {
+				return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v, дата: %s", err, search)
+			}
+		} else {
+			tasks, err = s.rps.GetTasksWithStr(search)
+			if err != nil {
+				return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v, строка: %s", err, search)
+			}
+		}
 	}
+	
 	if len(tasks) == 0 {
 		return []structures.Task{}, nil
 	} 
@@ -66,15 +83,15 @@ func (s *TodoService) CreateTask(task *structures.Task) (int64, error) {
 	}
 
 
-	return s.RepositoryInterface.CreateTask(task)
+	return s.rps.CreateTask(task)
 }
 
 func (s *TodoService) DelTask(id int64) (err error) {
-	return s.RepositoryInterface.DelTask(id)
+	return s.rps.DelTask(id)
 }
 
 func (s *TodoService) GetTask(id int64) (task structures.Task,  err error) {
-	return s.RepositoryInterface.GetTask(id)
+	return s.rps.GetTask(id)
 }
 
 func (s *TodoService) UpdateTask(task *structures.Task) (err error) {
@@ -115,5 +132,5 @@ func (s *TodoService) UpdateTask(task *structures.Task) (err error) {
 		}
 	}
 
-	return s.RepositoryInterface.UpdateTask(task)
+	return s.rps.UpdateTask(task)
 }

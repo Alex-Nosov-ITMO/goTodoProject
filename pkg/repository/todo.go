@@ -11,7 +11,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-
 type TodoRepository struct {
 	Db *sqlx.DB
 }
@@ -22,17 +21,61 @@ func NewTodoRepository(db *sqlx.DB) *TodoRepository {
 }
 
 // Методы репозитория
-func (r *TodoRepository) GetTasks() ([]structures.Task,  error) {
+func (r *TodoRepository) GetTasks() ([]structures.Task, error) {
 	var tasks []structures.Task
 
 	query := `SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT :limit`
-	
+
 	rows, err := r.Db.Query(query, sql.Named("limit", 45))
 	if err != nil {
 		return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
 	}
 	defer rows.Close()
-	
+
+	for rows.Next() {
+		var task structures.Task
+		err = rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка при считывании задач из базы данных: %v", err)
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, nil
+}
+
+func (r *TodoRepository) GetTasksWithStr(str string) ([]structures.Task, error) {
+	var tasks []structures.Task
+
+	query := `SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE :title OR comment LIKE :comment ORDER BY date ASC LIMIT :limit`
+
+	rows, err := r.Db.Query(query, sql.Named("title", "%"+str+"%"), sql.Named("comment", "%"+str+"%"), sql.Named("limit", 45))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var task structures.Task
+		err = rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка при считывании задач из базы данных: %v", err)
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, nil
+}
+
+func (r *TodoRepository) GetTasksWithDate(date string) ([]structures.Task, error) {
+	var tasks []structures.Task
+
+	query := `SELECT id, date, title, comment, repeat FROM scheduler WHERE date = :date ORDER BY date ASC LIMIT :limit`
+
+	rows, err := r.Db.Query(query, sql.Named("date", date), sql.Named("limit", 45))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
+	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var task structures.Task
 		err = rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
@@ -56,15 +99,15 @@ func (r *TodoRepository) CreateTask(task *structures.Task) (int64, error) {
 		return 0, fmt.Errorf("ошибка при получении id последней добавленной задачи: %v", err)
 	}
 
-	return id,nil
+	return id, nil
 }
 
-func (r *TodoRepository) DelTask(id int64) (error) {
+func (r *TodoRepository) DelTask(id int64) error {
 	chekTask, err := r.GetTask(int64(id))
 	if err != nil {
 		return fmt.Errorf("ошибка при получении задачи из базы данных: %v", err)
 	}
-	if chekTask == (structures.Task{}){
+	if chekTask == (structures.Task{}) {
 		return fmt.Errorf("задача с id: %d не существует", id)
 	}
 
@@ -76,7 +119,7 @@ func (r *TodoRepository) DelTask(id int64) (error) {
 	return nil
 }
 
-func (r *TodoRepository) GetTask(id int64) (structures.Task,  error) {
+func (r *TodoRepository) GetTask(id int64) (structures.Task, error) {
 	query := "SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id"
 
 	var task structures.Task
@@ -88,18 +131,17 @@ func (r *TodoRepository) GetTask(id int64) (structures.Task,  error) {
 	return task, nil
 }
 
+func (r *TodoRepository) UpdateTask(task *structures.Task) error {
+	id, _ := strconv.Atoi(task.ID)
 
-func (r *TodoRepository) UpdateTask(task *structures.Task) (error) {
-	id, _ := strconv.Atoi(task.ID)	
-	
 	chekTask, err := r.GetTask(int64(id))
 	if err != nil {
 		return fmt.Errorf("ошибка при получении задачи из базы данных: %v", err)
 	}
-	if chekTask == (structures.Task{}){
+	if chekTask == (structures.Task{}) {
 		return fmt.Errorf("задача с id: %s не существует", task.ID)
 	}
-	
+
 	query := "UPDATE scheduler SET date = $1, title = $2, comment = $3, repeat = $4 WHERE id = $5"
 
 	_, err = r.Db.Exec(query, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
@@ -108,4 +150,3 @@ func (r *TodoRepository) UpdateTask(task *structures.Task) (error) {
 	}
 	return nil
 }
-

@@ -16,6 +16,7 @@ type HandlerInterface interface {
 	UpdateTask(*gin.Context) ()
 	NextDate(*gin.Context) ()
 	DoneTask(*gin.Context) ()
+	Login(*gin.Context) ()
 }
 
 
