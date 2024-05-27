@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -27,29 +27,30 @@ func (s *TodoService) GetTasks(search string) (task []structures.Task,  err erro
 	if search == "" {
 		tasks, err = s.rps.GetTasks()
 		if err != nil {
-			return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
+			return nil, err
 		}
 	}else {
 		date, err := time.Parse("02.01.2006", search)
 		if err == nil {
 			tasks, err = s.rps.GetTasksWithDate(date.Format("20060102"))
 			if err != nil {
-				return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v, дата: %s", err, search)
+				return nil, err
 			}
 		} else {
 			tasks, err = s.rps.GetTasksWithStr(search)
 			if err != nil {
-				return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v, строка: %s", err, search)
+				return nil, err
 			}
-		}
+		}	
 	}
-	
+
 	if len(tasks) == 0 {
 		return []structures.Task{}, nil
 	} 
-
+	
 	return tasks, nil 
 }
+
 
 func (s *TodoService) CreateTask(task *structures.Task) (int64, error) {
 
@@ -67,8 +68,9 @@ func (s *TodoService) CreateTask(task *structures.Task) (int64, error) {
 
 	_, err := time.Parse("20060102", task.Date)
 	if err != nil {
-		return 0, fmt.Errorf("невозможно преобразовать дату: %s. Ошибка: %v", task.Date, err)
-	}
+		log.Printf("Service: CreateTask: невозможно преобразовать дату: %s. Ошибка: %v", task.Date, err)
+		return 0, errors.New("невозможно преобразовать дату")
+		}
 
 
 	if task.Date < time.Now().Format("20060102") {
@@ -77,12 +79,10 @@ func (s *TodoService) CreateTask(task *structures.Task) (int64, error) {
 		} else {
 			task.Date, err = nextDate.NextDate(time.Now(), task.Date, task.Repeat)
 			if err != nil {
-				return 0, fmt.Errorf("невозможно преобразовать дату: %s. Ошибка: %v", task.Date, err)
+				return 0, err
 			}
 		}
 	}
-
-
 	return s.rps.CreateTask(task)
 }
 
@@ -104,7 +104,8 @@ func (s *TodoService) UpdateTask(task *structures.Task) (err error) {
 	}
 
 	if _, err := strconv.Atoi(task.ID); err != nil {
-		return fmt.Errorf("невозможно преобразовать id: %s. Ошибка: %v", task.ID, err)
+		log.Printf("Service: UpdateTask: невозможно преобразовать id: %s. Ошибка: %v", task.ID, err)
+		return errors.New("невозможно преобразовать id")
 	}
 	
 	if task.Title == "" {
@@ -117,7 +118,8 @@ func (s *TodoService) UpdateTask(task *structures.Task) (err error) {
 
 	_, err = time.Parse("20060102", task.Date)
 	if err != nil {
-		return fmt.Errorf("невозможно преобразовать дату: %s. Ошибка: %v", task.Date, err)
+		log.Printf("Service: UpdateTask: невозможно преобразовать дату: %s. Ошибка: %v", task.Date, err)
+		return errors.New("невозможно преобразовать дату")
 	}
 
 
@@ -127,7 +129,7 @@ func (s *TodoService) UpdateTask(task *structures.Task) (err error) {
 		} else {
 			task.Date, err = nextDate.NextDate(time.Now(), task.Date, task.Repeat)
 			if err != nil {
-				return fmt.Errorf("невозможно преобразовать дату: %s. Ошибка: %v", task.Date, err)
+				return err
 			}
 		}
 	}

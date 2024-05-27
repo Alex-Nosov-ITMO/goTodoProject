@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/Alex-Nosov-ITMO/go_project_final/internal/logger"
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/db"
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/server"
 	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/handler"
@@ -33,11 +34,18 @@ func main() {
 		log.Fatal("todo db params not set")
 	}*/
 
+
+	// TODO: init logger
+	logger.LogFile = logger.LoggerInit()
+	defer logger.LogFile.Close()
+	log.SetOutput(logger.LogFile)
+
 	// TODO: connect to db
 	dbConn, err := db.NewDbConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Main: db connected")
 	defer dbConn.Close()
 
 	// TODO: init repo, service and handler
@@ -48,6 +56,6 @@ func main() {
 	// TODO: start server
 	srv := new(server.Server)
 	if err := srv.Run(os.Getenv("TODO_PORT"), handlers.InitRoutes()); err != nil {
-		log.Fatalf("failed to run server: %v", err)
+		log.Fatalf("Main: failed to run server: %v", err)
 	}
 }

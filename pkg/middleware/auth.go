@@ -1,9 +1,9 @@
 package middleware
 
 import (
+	"errors"
+	"log"
 	"net/http"
-	"fmt"
-	//	"strings"
 	"os"
 
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/structures"
@@ -23,36 +23,37 @@ func Auth(c *gin.Context) {
 			tokenStr = cookie
 		}
 
-	
-
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 			return structures.Secret, nil
 		})
 
 		if err != nil {
-			errStr := fmt.Sprintf("failed to parse token: %s\n", err)
+			log.Printf("Middleware: Auth: parse token: %s\n", err)
+			errStr := errors.New("failed to parse token")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": errStr})
 		}
 
 		res, ok := token.Claims.(jwt.MapClaims)
 		if !ok{
-			errStr := fmt.Sprintf("failed to parse token: %s\n", err)
+			log.Printf("Middleware: Auth: typecast to jwt.MapClaims")
+			errStr := errors.New("failed to typecast to jwt.MapClaims")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": errStr})
 		}
 
 		pasCookieRaw := res["password"]
 		pasCookie, ok := pasCookieRaw.(string)
 		if !ok{
-			errStr := fmt.Sprintf("failed to typecast to string: %s\n", err)
+			log.Printf("Middleware: Auth: typecast to string")
+			errStr := errors.New("failed to typecast to string")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": errStr})
 		}
 
 
 		if pasCookie != pass {
-			errStr := fmt.Sprintf("password is changed: %s\n", err)
+			log.Printf("Middleware: Auth: password is changed")
+			errStr := errors.New("password is changed")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": errStr})
 		}
-
 	}
 	c.Next()
 }

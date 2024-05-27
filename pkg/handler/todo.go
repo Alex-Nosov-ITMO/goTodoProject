@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -44,7 +44,8 @@ func (h *TodoHandler) CreateTask(c *gin.Context) {
 	var task structures.Task
 
 	if err := c.ShouldBindJSON(&task); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Handler: CreateTask: ShouldBindJSON: %s\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid json")})
 		return
 	}
 
@@ -66,7 +67,8 @@ func (h *TodoHandler) GetTask(c *gin.Context) {
 	}
 	validId, err := strconv.Atoi(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("invalid id: %s, error: %v", id, err)})
+		log.Printf("Handler: GetTask: strconv.Atoi: %s\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid id")})
 		return
 	}
 	task, err := h.srv.GetTask(int64(validId))
@@ -82,7 +84,8 @@ func (h *TodoHandler) DelTask(c *gin.Context) {
 	id := c.Query("id")
 	validId, err := strconv.Atoi(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("invalid id: %s, error: %v", id, err)})
+		log.Printf("Handler: DelTask: strconv.Atoi: invalid id: %s, error: %s\n", id, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid id")})
 		return
 	}
 
@@ -98,7 +101,8 @@ func (h *TodoHandler) UpdateTask(c *gin.Context) {
 	var task structures.Task
 
 	if err := c.ShouldBindJSON(&task); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Handler: UpdateTask: ShouldBindJSON: %s\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid json")})
 		return
 	}
 
@@ -115,7 +119,8 @@ func (h *TodoHandler) DoneTask(c *gin.Context) {
 	id := c.Query("id")
 	validId, err := strconv.Atoi(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("invalid id: %s, error: %v", id, err)})
+		log.Printf("Handler: DoneTask: strconv.Atoi: invalid id: %s, error: %s\n", id, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid id")})
 		return
 	}
 
@@ -197,7 +202,8 @@ func (h *TodoHandler) NextDate(c *gin.Context) {
 
 	nowTime, err := time.Parse("20060102", now)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: NextDate: time.Parse: ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.New("invalid date")})
 	}
 
 	newDate, err := nextDate.NextDate(nowTime, date, repeat)
@@ -212,8 +218,8 @@ func (h *TodoHandler) Login(c *gin.Context) {
 
 	var pass structures.Password
 	if err := c.ShouldBindJSON(&pass); err != nil {
-		log.Println("password: ", pass, " error: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Handler: Login: ShouldBindJSON: %s\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid json")})
 		return
 	}
 
@@ -230,7 +236,8 @@ func (h *TodoHandler) Login(c *gin.Context) {
 
 	signedToken, err := jwtToken.SignedString(structures.Secret)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("Handler: Login: jwtToken.SignedString: %s\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.New("failed to sign token")})
 		return
 	}
 	log.Println("token: ", signedToken)

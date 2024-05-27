@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/structures"
@@ -28,7 +30,8 @@ func (r *TodoRepository) GetTasks() ([]structures.Task, error) {
 
 	rows, err := r.Db.Query(query, sql.Named("limit", 45))
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
+		log.Printf("Repository: GetTasks: %v", err)
+		return nil, errors.New("ошибка при получении задач из базы данных")
 	}
 	defer rows.Close()
 
@@ -36,7 +39,8 @@ func (r *TodoRepository) GetTasks() ([]structures.Task, error) {
 		var task structures.Task
 		err = rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return nil, fmt.Errorf("ошибка при считывании задач из базы данных: %v", err)
+			log.Printf("Repository: GetTasks: %v", err)
+			return nil, errors.New("ошибка при считывании задач из базы данных")
 		}
 		tasks = append(tasks, task)
 	}
@@ -50,6 +54,7 @@ func (r *TodoRepository) GetTasksWithStr(str string) ([]structures.Task, error) 
 
 	rows, err := r.Db.Query(query, sql.Named("title", "%"+str+"%"), sql.Named("comment", "%"+str+"%"), sql.Named("limit", 45))
 	if err != nil {
+		log.Printf("Repository: GetTasksWithStr: %v", err)
 		return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
 	}
 	defer rows.Close()
@@ -58,7 +63,8 @@ func (r *TodoRepository) GetTasksWithStr(str string) ([]structures.Task, error) 
 		var task structures.Task
 		err = rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return nil, fmt.Errorf("ошибка при считывании задач из базы данных: %v", err)
+			log.Printf("Repository: GetTasksWithStr: %v", err)
+			return nil, errors.New("ошибка при считывании задач из базы данных")
 		}
 		tasks = append(tasks, task)
 	}
@@ -72,7 +78,8 @@ func (r *TodoRepository) GetTasksWithDate(date string) ([]structures.Task, error
 
 	rows, err := r.Db.Query(query, sql.Named("date", date), sql.Named("limit", 45))
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при получении задач из базы данных: %v", err)
+		log.Printf("Repository: GetTasksWithDate: %v", err)
+		return nil, errors.New("ошибка при получении задач из базы данных")
 	}
 	defer rows.Close()
 
@@ -80,7 +87,8 @@ func (r *TodoRepository) GetTasksWithDate(date string) ([]structures.Task, error
 		var task structures.Task
 		err = rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return nil, fmt.Errorf("ошибка при считывании задач из базы данных: %v", err)
+			log.Printf("Repository: GetTasksWithDate: %v", err)
+			return nil, errors.New("ошибка при считывании задач из базы данных")
 		}
 		tasks = append(tasks, task)
 	}
@@ -91,12 +99,14 @@ func (r *TodoRepository) CreateTask(task *structures.Task) (int64, error) {
 	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES ($1, $2, $3, $4)"
 	response, err := r.Db.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
 	if err != nil {
-		return 0, fmt.Errorf("ошибка при создании задачи в базе данных: %v", err)
+		log.Printf("Repository: CreateTask: %v", err)
+		return 0, errors.New("ошибка при добавлении задачи в базу данных")
 	}
 
 	id, err := response.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("ошибка при получении id последней добавленной задачи: %v", err)
+		log.Printf("Repository: CreateTask: %v", err)
+		return 0, errors.New("ошибка при добавлении задачи в базу данных")
 	}
 
 	return id, nil
@@ -105,7 +115,8 @@ func (r *TodoRepository) CreateTask(task *structures.Task) (int64, error) {
 func (r *TodoRepository) DelTask(id int64) error {
 	chekTask, err := r.GetTask(int64(id))
 	if err != nil {
-		return fmt.Errorf("ошибка при получении задачи из базы данных: %v", err)
+		log.Printf("Repository: DelTask: %v", err)
+		return errors.New("ошибка при удалении задачи из базы данных")
 	}
 	if chekTask == (structures.Task{}) {
 		return fmt.Errorf("задача с id: %d не существует", id)
@@ -114,7 +125,8 @@ func (r *TodoRepository) DelTask(id int64) error {
 	query := "DELETE FROM scheduler WHERE id = :id"
 	_, err = r.Db.Exec(query, sql.Named("id", id))
 	if err != nil {
-		return fmt.Errorf("ошибка при удалении задачи из базы данных: %v", err)
+		log.Printf("Repository: DelTask: %v", err)
+		return errors.New("ошибка при удалении задачи из базы данных")
 	}
 	return nil
 }
@@ -126,7 +138,8 @@ func (r *TodoRepository) GetTask(id int64) (structures.Task, error) {
 	row := r.Db.QueryRow(query, sql.Named("id", id))
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
-		return structures.Task{}, fmt.Errorf("ошибка при получении задачи из базы данных: %v", err)
+		log.Printf("Repository: GetTask: %v", err)
+		return structures.Task{}, errors.New("ошибка при получении задачи из базы данных")
 	}
 	return task, nil
 }
@@ -136,7 +149,8 @@ func (r *TodoRepository) UpdateTask(task *structures.Task) error {
 
 	chekTask, err := r.GetTask(int64(id))
 	if err != nil {
-		return fmt.Errorf("ошибка при получении задачи из базы данных: %v", err)
+		log.Printf("Repository: UpdateTask: %v", err)
+		return errors.New("ошибка при обновлении задачи в базе данных")
 	}
 	if chekTask == (structures.Task{}) {
 		return fmt.Errorf("задача с id: %s не существует", task.ID)
@@ -146,7 +160,8 @@ func (r *TodoRepository) UpdateTask(task *structures.Task) error {
 
 	_, err = r.Db.Exec(query, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
 	if err != nil {
-		return fmt.Errorf("ошибка при обновлении задачи в базе данных: %v", err)
+		log.Printf("Repository: UpdateTask: %v", err)
+		return errors.New("ошибка при обновлении задачи в базе данных")
 	}
 	return nil
 }

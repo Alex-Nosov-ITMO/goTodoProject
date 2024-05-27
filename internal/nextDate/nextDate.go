@@ -3,6 +3,7 @@ package nextDate
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -31,6 +32,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	// Парсим дату из строки в объект типа time.Time
 	t, err := time.Parse("20060102", date)
 	if err != nil {
+		log.Printf("NextDate: неверная дата: %s. Ошибка: %v", date, err)
 		return "", fmt.Errorf("невозможно преобразовать дату: %s. Ошибка: %v", date, err)
 	}
 
@@ -53,7 +55,8 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 		days, err := strconv.Atoi(parts[1])
 		if err != nil {
-			return "", err
+			log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", parts[1], err)
+			return "", errors.New("ошибка в правиле повторения")
 		}
 
 		// Проверка на корректность формата правила повторения
@@ -98,7 +101,8 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		for _, v := range daysString {
 			d, err := strconv.Atoi(v)
 			if err != nil {
-				return "", err
+				log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", v, err)
+				return "", errors.New("ошибка в правиле повторения")
 			}
 			if d < 1 || d > 7 {
 				return "", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 7", repeat)
@@ -146,7 +150,8 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		for _, v := range daysMonthString {
 			d, err := strconv.Atoi(v)
 			if err != nil {
-				return "", err
+				log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", v, err)
+				return "", errors.New("ошибка в правиле повторения")
 			}
 			if !((d >= 1 && d <= 31) || (d == -1) || (d == -2)) {
 				return "", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 31 или -1, -2", repeat)
@@ -166,7 +171,8 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 			for _, v := range monthsString {
 				m, err := strconv.Atoi(v)
 				if err != nil {
-					return "", err
+					log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", v, err)
+					return "", errors.New("ошибка в правиле повторения")
 				}
 				if m < 1 || m > 12 {
 					return "", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число месяцев от 1 до 12", repeat)

@@ -1,12 +1,14 @@
 package db
 
 import (
+	"errors"
+	"log"
 	"os"
 	"path/filepath"
 
 	//_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 
@@ -37,7 +39,8 @@ func NewDbConnection() (*DbConnection, error) {
 	// TODO: connect to db
 	appPath, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		log.Printf("DbConnection: can't get app path: %s\n", err)
+		return nil, errors.New("can't get app path")
 	}
 	dbFile := filepath.Join(appPath, os.Getenv("DB_NAME"))
 
@@ -49,7 +52,8 @@ func NewDbConnection() (*DbConnection, error) {
 
 	db, err := sqlx.Open(os.Getenv("DB_DRIVER"), dbFile)
 	if err != nil {
-		return nil, err
+		log.Printf("DbConnection: can't open db: %s\n", err)
+		return nil, errors.New("can't open db")
 	}
 
 	if install {
@@ -64,7 +68,8 @@ func NewDbConnection() (*DbConnection, error) {
 		CREATE INDEX idx_scheduler_date ON scheduler (date);
 		`)
 		if err != nil {
-			return nil, err
+			log.Printf("DbConnection: can't create db: %s\n", err)
+			return nil, errors.New("can't create db")
 		}
 	}
 
