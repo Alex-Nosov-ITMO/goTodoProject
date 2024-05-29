@@ -25,16 +25,6 @@ type ConfigDB struct {
 }
 
 func NewDbConnection() (*DbConnection, error) {
-	//connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", conf.User, conf.Password, conf.Host, conf.Password, conf.Dbname)
-
-	/*db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &DbConnection{
-		Db: db,
-	}	*/
 	
 	// TODO: connect to db
 	appPath, err := os.Getwd()

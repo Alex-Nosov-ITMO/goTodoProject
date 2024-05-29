@@ -14,6 +14,8 @@ import (
 	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/service"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/swaggo/gin-swagger"
+	"github.com/swaggo/files"
 )
 
 type TodoHandler struct {
@@ -28,6 +30,20 @@ func NewTodoHandler(services service.ServiceInterface) *TodoHandler {
 }
 
 // Хендлеры
+
+// @Summary Get tasks
+// @Tags tasks
+// @Description get all tasks
+// @ID get-tasks
+// @Accept  json
+// @Produce  json
+// @Param search query string false "search"
+// @Success 200 {array} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/tasks [get]
 func (h *TodoHandler) GetTasks(c *gin.Context) {
 
 	search := c.Query("search")
@@ -40,6 +56,19 @@ func (h *TodoHandler) GetTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"tasks": tasks})
 }
 
+// @Summary Create task
+// @Tags tasks
+// @Description create task
+// @ID create-task
+// @Accept  json
+// @Produce  json
+// @Param task body structures.Task true "task"
+// @Success 200 {object} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/task [post]
 func (h *TodoHandler) CreateTask(c *gin.Context) {
 	var task structures.Task
 
@@ -58,6 +87,19 @@ func (h *TodoHandler) CreateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }
 
+// @Summary Get task
+// @Tags tasks
+// @Description get task
+// @ID get-task
+// @Accept  json
+// @Produce  json
+// @Param id query string true "id"
+// @Success 200 {object} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/task [get]
 func (h *TodoHandler) GetTask(c *gin.Context) {
 
 	id := c.Query("id")
@@ -79,6 +121,19 @@ func (h *TodoHandler) GetTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
+// @Summary Delete task
+// @Tags tasks
+// @Description delete task
+// @ID delete-task
+// @Accept  json
+// @Produce  json
+// @Param id query string true "id"
+// @Success 200 {object} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/task [delete]
 func (h *TodoHandler) DelTask(c *gin.Context) {
 
 	id := c.Query("id")
@@ -97,6 +152,19 @@ func (h *TodoHandler) DelTask(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary Update task
+// @Tags tasks
+// @Description update task
+// @ID update-task
+// @Accept  json
+// @Produce  json
+// @Param task body structures.Task true "task"
+// @Success 200 {object} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/task [put]
 func (h *TodoHandler) UpdateTask(c *gin.Context) {
 	var task structures.Task
 
@@ -115,6 +183,19 @@ func (h *TodoHandler) UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary Done task
+// @Tags tasks
+// @Description done task
+// @ID done-task
+// @Accept  json
+// @Produce  json
+// @Param id query string true "id"
+// @Success 200 {object} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/task/done [post]
 func (h *TodoHandler) DoneTask(c *gin.Context) {
 	id := c.Query("id")
 	validId, err := strconv.Atoi(id)
@@ -187,6 +268,8 @@ func (h *TodoHandler) InitRoutes() *gin.Engine {
 		api.DELETE("/task", h.DelTask)
 		api.POST("/task/done", h.DoneTask)
 	}
+	router.GET("/docs", func(c *gin.Context) { c.Redirect(http.StatusFound, "swagger/index.html") })
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return router
 }
@@ -195,6 +278,21 @@ func Index(c *gin.Context) {
 	c.File("./web/index.html")
 }
 
+// @Summary Next date
+// @Tags next-date
+// @Description get next date
+// @ID next-date
+// @Accept  json
+// @Produce  json
+// @Param now query string true "now"
+// @Param date query string true "date"
+// @Param repeat query string true "repeat"
+// @Success 200 {object} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/nextdate [get]
 func (h *TodoHandler) NextDate(c *gin.Context) {
 	now := c.Query("now")
 	date := c.Query("date")
@@ -214,6 +312,19 @@ func (h *TodoHandler) NextDate(c *gin.Context) {
 	c.String(http.StatusOK, newDate)
 }
 
+// @Summary Login
+// @Tags login
+// @Description login
+// @ID login
+// @Accept  json
+// @Produce  json
+// @Param password body structures.Password true "password"
+// @Success 200 {object} structures.StatusOK
+// @Failure 400 {object} structures.StatusBadRequest
+// @Failure 404 {object} structures.StatusNotFound
+// @Failure 500 {object} structures.StatusInternalServerError
+// @Failure 401 {object} structures.StatusUnauthorized
+// @Router /api/signin [post]
 func (h *TodoHandler) Login(c *gin.Context) {
 
 	var pass structures.Password
