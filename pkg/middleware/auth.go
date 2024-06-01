@@ -30,26 +30,26 @@ func Auth(c *gin.Context) {
 
 		if err != nil {
 			log.Printf("Middleware: Auth: parse token: %s\n", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.ErrorsString["Unauthorized"]})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.Unauthorized})
 		}
 
 		res, ok := token.Claims.(jwt.MapClaims)
 		if !ok{
 			log.Printf("Middleware: Auth: typecast to jwt.MapClaims")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.ErrorsString["Unauthorized"]})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.Unauthorized})
 		}
 
 		pasCookieRaw := res["password"]
 		pasCookie, ok := pasCookieRaw.(string)
 		if !ok{
 			log.Printf("Middleware: Auth: typecast to string")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.ErrorsString["Unauthorized"]})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.Unauthorized})
 		}
 
 
 		if pasCookie != pass {
 			log.Printf("Middleware: Auth: password is changed")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.ErrorsString["Unauthorized"]})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.Unauthorized})
 		}
 	}
 	c.Next()

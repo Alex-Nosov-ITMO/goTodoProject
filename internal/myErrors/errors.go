@@ -1,9 +1,9 @@
 package myErrors
 
 import (
-	"errors"
+	"fmt"
 )
-
+/*
 var ErrorsString = map[string] string{
 	"BadRequest": errors.New("неверный запрос").Error(),
 	"InternalServerError": errors.New("ошибка сервера").Error(),
@@ -12,7 +12,16 @@ var ErrorsString = map[string] string{
 	"InvalidID": errors.New("невалидный идентификатор").Error(),
 	"WrongPassword": errors.New("неверный пароль, не авторизован").Error(),
 }
+*/
+var (
+	BadRequest = "неверный запрос"
+	InternalServerError = "ошибка сервера"
+	Unauthorized = "не авторизован"
+	NotFound = "не найдено"
+	InvalidID = "невалидный идентификатор"
+	WrongPassword = "неверный пароль, не авторизован"
+)
 
 func WithMassage(message string, err error) error {
-	return errors.New(message + ": " + err.Error())
+	return fmt.Errorf("%s: %w", message, err)
 }
