@@ -3,10 +3,11 @@ package nextDate
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	myErr "github.com/Alex-Nosov-ITMO/go_project_final/internal/myErrors"
 )
 
 // Количество дней в месяце
@@ -32,13 +33,13 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	// Парсим дату из строки в объект типа time.Time
 	t, err := time.Parse("20060102", date)
 	if err != nil {
-		log.Printf("NextDate: неверная дата: %s. Ошибка: %v", date, err)
-		return "", fmt.Errorf("невозможно преобразовать дату: %s. Ошибка: %v", date, err)
+		st := fmt.Sprintf("NextDate: неверная дата: %s. Ошибка", date)
+		return "", myErr.WithMassage(st, err)
 	}
 
 	// Проверяем формат правила повторения
 	if repeat == "" {
-		return "", errors.New("правило повторения не указано")
+		return "", myErr.WithMassage("NextDate", errors.New("правило повторения не задано"))
 	}
 
 	// Разбиваем правило повторения на части
@@ -50,18 +51,18 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	case "d":
 
 		if len(parts) != 2 {
-			return "", errors.New("неверное количество аргументов правила повторения")
+			return "", myErr.WithMassage("NextDate", errors.New("неверное количество аргументов правила повторения"))
 		}
 
 		days, err := strconv.Atoi(parts[1])
 		if err != nil {
-			log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", parts[1], err)
-			return "", errors.New("ошибка в правиле повторения")
+			st := fmt.Sprintf("NextDate: неверное количество дней: %s. Ошибка", parts[1])
+			return "", myErr.WithMassage(st, err)
 		}
 
 		// Проверка на корректность формата правила повторения
 		if days < 1 || days > 400 {
-			return "", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 400", repeat)
+			return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 400", repeat))
 		}
 
 		// Прибавляем к дате нужное количество дней
@@ -76,7 +77,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	case "y":
 
 		if len(parts) != 1 {
-			return "", errors.New("неверное количество аргументов правила повторения")
+			return "", myErr.WithMassage("NextDate", errors.New("неверное количество аргументов правила повторения"))
 		}
 
 		t = t.AddDate(1, 0, 0)
@@ -90,7 +91,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	case "w":
 
 		if len(parts) != 2 {
-			return "", errors.New("неверное количество аргументов правила повторения")
+			return "", myErr.WithMassage("NextDate", errors.New("неверное количество аргументов правила повторения"))
 		}
 
 		// Разделяем дни недели
@@ -101,17 +102,18 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		for _, v := range daysString {
 			d, err := strconv.Atoi(v)
 			if err != nil {
-				log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", v, err)
-				return "", errors.New("ошибка в правиле повторения")
+				st := fmt.Sprintf("NextDate: неверное количество дней: %s. Ошибка", parts[1])
+				return "", myErr.WithMassage(st, err)
 			}
+				
 			if d < 1 || d > 7 {
-				return "", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 7", repeat)
+				return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 7", repeat))
 			}
 
 			if !contains(&days, d) {
 				days = append(days, d)
 			} else {
-				return "", fmt.Errorf("некорректный формат правила повторения: %s, введены дублирующиеся дни недели", repeat)
+				return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, введены дублирующиеся дни недели", repeat))
 			}
 		}
 
@@ -139,7 +141,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	// Ежемесячно
 	case "m":
 		if len(parts) != 2 && len(parts) != 3 {
-			return "", errors.New("неверное количество аргументов правила повторения")
+			return "", myErr.WithMassage("NextDate", errors.New("неверное количество аргументов правила повторения"))
 		}
 
 		var monthsString, daysMonthString []string
@@ -150,17 +152,17 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		for _, v := range daysMonthString {
 			d, err := strconv.Atoi(v)
 			if err != nil {
-				log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", v, err)
-				return "", errors.New("ошибка в правиле повторения")
+				st := fmt.Sprintf("NextDate: неверное количество дней: %s. Ошибка", parts[1])
+				return "", myErr.WithMassage(st, err)
 			}
 			if !((d >= 1 && d <= 31) || (d == -1) || (d == -2)) {
-				return "", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 31 или -1, -2", repeat)
+				return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число от 1 до 31 или -1, -2", repeat))
 			}
 
 			if !contains(&daysMonth, d) {
 				daysMonth = append(daysMonth, d)
 			} else {
-				return "", fmt.Errorf("некорректный формат правила повторения: %s, введены дублирующиеся дни месяца", repeat)
+				return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, введены дублирующиеся дни месяца", repeat))
 			}
 		}
 
@@ -171,17 +173,18 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 			for _, v := range monthsString {
 				m, err := strconv.Atoi(v)
 				if err != nil {
-					log.Printf("NextDate: неверное значение правила повторения: %s. Ошибка: %v", v, err)
-					return "", errors.New("ошибка в правиле повторения")
+					st := fmt.Sprintf("NextDate: неверное количество месяцев: %s. Ошибка", parts[2])
+					return "", myErr.WithMassage(st, err)
 				}
+
 				if m < 1 || m > 12 {
-					return "", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число месяцев от 1 до 12", repeat)
+					return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, должно быть целое число месяцев от 1 до 12", repeat))
 				}
 
 				if !contains(&months, m) {
 					months = append(months, m)
 				} else {
-					return "", fmt.Errorf("некорректный формат правила повторения: %s, введены дублирующиеся месяцы", repeat)
+					return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, введены дублирующиеся месяцы", repeat))
 				}
 			}
 
@@ -198,7 +201,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 			}
 
 			if !ok {
-				return "", fmt.Errorf("некорректный формат правила повторения: %s, не существует такого дня в введенных месяцах", repeat)
+				return "", myErr.WithMassage("NextDate", fmt.Errorf("некорректный формат правила повторения: %s, не существует такого дня в введенных месяцах", repeat))
 			}
 		}
 
@@ -248,7 +251,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 	// Некорректный формат правила повторения
 	default:
-		return "", errors.New("неподдерживаемый формат правила повторения")
+		return "", myErr.WithMassage("NextDate", errors.New("неподдерживаемый формат правила повторения"))
 	}
 
 	return t.Format("20060102"), nil
@@ -256,6 +259,10 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 // Проверка на наличие элемента в срезе
 func contains(arr *[]int, target int) bool {
+	if arr == nil {
+		return false
+	}
+	
 	for _, num := range *arr {
 		if num == target {
 			return true

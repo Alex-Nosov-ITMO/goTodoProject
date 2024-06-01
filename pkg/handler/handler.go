@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/service"
 	"github.com/gin-gonic/gin"
+
+	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/service"
 )
 
 

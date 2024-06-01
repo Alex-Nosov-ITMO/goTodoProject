@@ -4,13 +4,14 @@ import (
 	"log"
 	"os"
 
+	"github.com/joho/godotenv"
+
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/logger"
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/db"
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/server"
 	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/handler"
 	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/repository"
 	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/service"
-	"github.com/joho/godotenv"
 	_ "github.com/Alex-Nosov-ITMO/go_project_final/docs"
 )
 

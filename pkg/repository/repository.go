@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"github.com/Alex-Nosov-ITMO/go_project_final/internal/structures"
 	"github.com/jmoiron/sqlx"
+	
+	"github.com/Alex-Nosov-ITMO/go_project_final/internal/structures"
 )
 
 // Слой репозитория

@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	//_ "github.com/lib/pq"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )

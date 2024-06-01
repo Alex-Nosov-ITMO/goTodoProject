@@ -1,5 +1,6 @@
 package structures
 
+
 // swagger:model
 type Task struct {
 	ID      string  `json:"id"`

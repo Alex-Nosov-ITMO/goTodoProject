@@ -1,21 +1,22 @@
 package handler
 
 import (
-	"errors"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
+
+	"github.com/Alex-Nosov-ITMO/go_project_final/internal/myErrors"
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/nextDate"
 	"github.com/Alex-Nosov-ITMO/go_project_final/internal/structures"
 	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/middleware"
 	"github.com/Alex-Nosov-ITMO/go_project_final/pkg/service"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/swaggo/gin-swagger"
-	"github.com/swaggo/files"
 )
 
 type TodoHandler struct {
@@ -50,7 +51,8 @@ func (h *TodoHandler) GetTasks(c *gin.Context) {
 
 	tasks, err := h.srv.GetTasks(search)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: GetTasks: ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"tasks": tasks})
@@ -74,13 +76,14 @@ func (h *TodoHandler) CreateTask(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&task); err != nil {
 		log.Printf("Handler: CreateTask: ShouldBindJSON: %s\n", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid json")})
+		c.JSON(http.StatusBadRequest, gin.H{"error": myErrors.ErrorsString["BadRequest"]})
 		return
 	}
 
 	id, err := h.srv.CreateTask(&task)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: CreateTask:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 		return
 	}
 
@@ -104,18 +107,20 @@ func (h *TodoHandler) GetTask(c *gin.Context) {
 
 	id := c.Query("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		log.Println("Handler: GetTask: id is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": myErrors.ErrorsString["InvalidID"]})
 		return
 	}
 	validId, err := strconv.Atoi(id)
 	if err != nil {
 		log.Printf("Handler: GetTask: strconv.Atoi: %s\n", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid id")})
+		c.JSON(http.StatusBadRequest, gin.H{"error": myErrors.ErrorsString["InvalidID"]})
 		return
 	}
 	task, err := h.srv.GetTask(int64(validId))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: GetTask: ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 		return
 	}
 	c.JSON(http.StatusOK, task)
@@ -140,13 +145,14 @@ func (h *TodoHandler) DelTask(c *gin.Context) {
 	validId, err := strconv.Atoi(id)
 	if err != nil {
 		log.Printf("Handler: DelTask: strconv.Atoi: invalid id: %s, error: %s\n", id, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid id")})
+		c.JSON(http.StatusBadRequest, gin.H{"error": myErrors.ErrorsString["InvalidID"]})
 		return
 	}
 
 	err = h.srv.DelTask(int64(validId))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: DelTask: ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{})
@@ -170,13 +176,14 @@ func (h *TodoHandler) UpdateTask(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&task); err != nil {
 		log.Printf("Handler: UpdateTask: ShouldBindJSON: %s\n", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid json")})
+		c.JSON(http.StatusBadRequest, gin.H{"error": myErrors.ErrorsString["BadRequest"]})
 		return
 	}
 
 	err := h.srv.UpdateTask(&task)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: UpdateTask: ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 		return
 	}
 
@@ -201,14 +208,15 @@ func (h *TodoHandler) DoneTask(c *gin.Context) {
 	validId, err := strconv.Atoi(id)
 	if err != nil {
 		log.Printf("Handler: DoneTask: strconv.Atoi: invalid id: %s, error: %s\n", id, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid id")})
+		c.JSON(http.StatusBadRequest, gin.H{"error": myErrors.ErrorsString["InvalidID"]})
 		return
 	}
 
 	var task structures.Task
 	task, err = h.srv.GetTask(int64(validId))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: DoneTask: ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 		return
 	}
 
@@ -217,7 +225,8 @@ func (h *TodoHandler) DoneTask(c *gin.Context) {
 	case "":
 		err := h.srv.DelTask(int64(validId))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Println("Handler: DoneTask: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{})
@@ -226,13 +235,15 @@ func (h *TodoHandler) DoneTask(c *gin.Context) {
 	default:
 		task.Date, err = nextDate.NextDate(time.Now(), task.Date, task.Repeat)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Println("Handler: DoneTask: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 			return
 		}
 
 		err = h.srv.UpdateTask(&task)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Println("Handler: DoneTask: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{})
@@ -301,12 +312,13 @@ func (h *TodoHandler) NextDate(c *gin.Context) {
 	nowTime, err := time.Parse("20060102", now)
 	if err != nil {
 		log.Println("Handler: NextDate: time.Parse: ", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.New("invalid date")})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 	}
 
 	newDate, err := nextDate.NextDate(nowTime, date, repeat)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Handler: NextDate:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 	}
 
 	c.String(http.StatusOK, newDate)
@@ -330,14 +342,15 @@ func (h *TodoHandler) Login(c *gin.Context) {
 	var pass structures.Password
 	if err := c.ShouldBindJSON(&pass); err != nil {
 		log.Printf("Handler: Login: ShouldBindJSON: %s\n", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid json")})
+		c.JSON(http.StatusBadRequest, gin.H{"error": myErrors.ErrorsString["BadRequest"]})
 		return
 	}
 
 	realPassword := os.Getenv("TODO_PASSWORD")
 
 	if pass.Password != realPassword {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "wrong password"})
+		log.Println("Handler: Login: wrong password")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": myErrors.ErrorsString["WrongPassword"]})
 		return
 	}
 
@@ -348,9 +361,9 @@ func (h *TodoHandler) Login(c *gin.Context) {
 	signedToken, err := jwtToken.SignedString(structures.Secret)
 	if err != nil {
 		log.Printf("Handler: Login: jwtToken.SignedString: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": errors.New("failed to sign token")})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": myErrors.ErrorsString["InternalServerError"]})
 		return
 	}
-	log.Println("token: ", signedToken)
+	log.Println("token:", signedToken)
 	c.JSON(http.StatusOK, gin.H{"token": signedToken})
 }
