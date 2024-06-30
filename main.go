@@ -43,6 +43,7 @@ func main() {
 	log.Println("Main: db connected")
 	defer dbConn.Close()
 
+	
 	// TODO: init repo, service and handler
 	repos := repository.NewRepository(dbConn.Db)
 	services := service.NewService(repos)
